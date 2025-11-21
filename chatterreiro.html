@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat</title>
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: #0f0;
+    display: flex;
+    height: 100vh;
+}
+
+/* LISTA DE USUÁRIOS */
+#listaUsuarios {
+    width: 260px;
+    background: #0a0a0a;
+    border-right: 2px solid #0f0;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.userBox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid #0f0;
+    cursor: pointer;
+}
+
+.userBox:hover {
+    background: rgba(0,255,0,0.15);
+}
+
+.userBox img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #0f0;
+}
+
+.onlineDot {
+    width: 10px;
+    height: 10px;
+    background: #00ff00;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink { 50% { opacity: 0.3; } }
+
+/* CHAT */
+#chatArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#chatHeader {
+    background: #0a0a0a;
+    padding: 15px;
+    font-size: 18px;
+    border-bottom: 2px solid #0f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#chatHeader img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #0f0;
+}
+
+#mensagens {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.msg {
+    max-width: 70%;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(0,255,0,0.18);
+    border: 1px solid #0f0;
+}
+
+.msg.me {
+    margin-left: auto;
+    background: rgba(0,255,0,0.35);
+}
+
+#inputArea {
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    background: #0a0a0a;
+    border-top: 2px solid #0f0;
+}
+
+#msgInput {
+    flex: 1;
+    padding: 10px;
+    background: #000;
+    border: 1px solid #0f0;
+    color: #0f0;
+    border-radius: 5px;
+}
+
+button {
+    padding: 10px 20px;
+    background: #0f0;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #66ff66;
+}
+</style>
+</head>
+
+<body>
+
+<!-- USUÁRIOS ONLINE -->
+<div id="listaUsuarios">
+    <h2>Online</h2>
+</div>
+
+<!-- CHAT -->
+<div id="chatArea">
+    <div id="chatHeader">Selecione um usuário</div>
+    <div id="mensagens"></div>
+
+    <div id="inputArea">
+        <input id="msgInput" placeholder="Digite..." disabled>
+        <button id="sendBtn" disabled>Enviar</button>
+    </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } 
+  from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, push }
+  from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+/* --------------------------
+   USUÁRIO LOGADO NO SEU SITE
+---------------------------*/
+const usuario = localStorage.getItem("usuarioLogado");
+const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
+    || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+if (!usuario) {
+    alert("❌ Você precisa estar logado no site para usar o chat.");
+}
+
+/* --------------------------
+   CONFIG DO SEU FIREBASE
+---------------------------*/
+const firebaseConfig = {
+    apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
+    authDomain: "coletivo-f34d4.firebaseapp.com",
+    databaseURL: "https://coletivo-f34d4-default-rtdb.firebaseio.com",
+    projectId: "coletivo-f34d4",
+    storageBucket: "coletivo-f34d4.firebasestorage.app",
+    messagingSenderId: "296376447787",
+    appId: "1:296376447787:web:1341c59c8087d6ac1e4b6e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* --------------------------
+   MARCAR USUÁRIO ONLINE
+---------------------------*/
+const meRef = ref(db, "chat/usuariosOnline/" + usuario);
+set(meRef, {
+    nome: usuario,
+    foto: fotoPerfil,
+    online: true
+});
+
+window.addEventListener("beforeunload", () => {
+    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+});
+
+/* --------------------------
+   LISTA DE USUÁRIOS ONLINE
+---------------------------*/
+onValue(ref(db, "chat/usuariosOnline"), snap => {
+    const lista = document.getElementById("listaUsuarios");
+    lista.innerHTML = "<h2>Online</h2>";
+
+    snap.forEach(s => {
+        const u = s.val();
+
+        if (!u.online || u.nome === usuario) return;
+
+        const box = document.createElement("div");
+        box.className = "userBox";
+        box.onclick = () => abrirChat(u.nome, u.foto);
+
+        box.innerHTML = `
+            <img src="${u.foto}">
+            <div class="onlineDot"></div>
+            <span>${u.nome}</span>
+        `;
+
+        lista.appendChild(box);
+    });
+});
+
+/* --------------------------
+   ABRIR CONVERSA
+---------------------------*/
+let conversandoCom = null;
+let fotoOutro = "";
+
+function abrirChat(nome, foto) {
+    conversandoCom = nome;
+    fotoOutro = foto;
+
+    document.getElementById("chatHeader").innerHTML = `
+        <img src="${foto}">
+        ${nome}
+    `;
+
+    document.getElementById("msgInput").disabled = false;
+    document.getElementById("sendBtn").disabled = false;
+
+    carregarMensagens();
+}
+
+/* --------------------------
+   GERAR ID ÚNICO DA SALA
+---------------------------*/
+function sala(a, b) {
+    return [a, b].sort().join("_");
+}
+
+/* --------------------------
+   CARREGAR MENSAGENS
+---------------------------*/
+function carregarMensagens() {
+    const caminho = sala(usuario, conversandoCom);
+    const msgsRef = ref(db, "chat/conversas/" + caminho);
+
+    onValue(msgsRef, snap => {
+        const box = document.getElementById("mensagens");
+        box.innerHTML = "";
+
+        snap.forEach(m => {
+            const d = m.val();
+
+            const div = document.createElement("div");
+            div.className = "msg" + (d.de === usuario ? " me" : "");
+            div.textContent = d.texto;
+
+            box.appendChild(div);
+        });
+
+        box.scrollTop = box.scrollHeight;
+    });
+}
+
+/* --------------------------
+      ENVIAR MENSAGEM
+---------------------------*/
+document.getElementById("sendBtn").onclick = enviar;
+
+function enviar() {
+    const input = document.getElementById("msgInput");
+    if (!input.value.trim() || !conversandoCom) return;
+
+    const caminho = sala(usuario, conversandoCom);
+
+    push(ref(db, "chat/conversas/" + caminho), {
+        de: usuario,
+        para: conversandoCom,
+        texto: input.value,
+        hora: Date.now(),
+        foto: fotoPerfil
+    });
+
+    input.value = "";
+}
+</script>
+
+</body>
+</html>
