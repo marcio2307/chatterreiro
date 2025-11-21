@@ -24,6 +24,7 @@ body {
     border-right: 2px solid #0f0;
     overflow-y: auto;
     padding-bottom: 20px;
+    position: relative;
 }
 
 #listaUsuarios h2 {
@@ -99,12 +100,13 @@ body {
     border: 2px solid #0f0;
 }
 
-/* Botão voltar (aparece só no celular) */
+/* Botão voltar */
 #voltar {
     display: none;
-    font-size: 18px;
-    margin-right: 10px;
+    font-size: 20px;
     cursor: pointer;
+    color: #0f0;
+    margin-right: 10px;
 }
 
 /* Mensagens */
@@ -152,8 +154,6 @@ body {
 #msgInput {
     flex: 1;
     padding: 12px;
-    border: none;
-    outline: none;
     border-radius: 30px;
     background: #000;
     border: 2px solid #0f0;
@@ -177,16 +177,23 @@ button:hover {
 }
 
 /* -----------------------------
-           MOBILE
+           MOBILE FIX
 ------------------------------ */
 @media (max-width: 768px) {
+
+    body {
+        flex-direction: column;
+    }
 
     #listaUsuarios {
         width: 100%;
         height: 100%;
         position: absolute;
+        left: 0;
+        top: 0;
         z-index: 10;
         transition: 0.3s;
+        background: #000;
     }
 
     #listaUsuarios.hidden {
@@ -199,9 +206,7 @@ button:hover {
     }
 
     #voltar {
-        display: block;
-        color: #0f0;
-        padding: 10px;
+        display: block !important;
     }
 }
 </style>
@@ -236,9 +241,7 @@ import { initializeApp }
 import { getDatabase, ref, set, onValue, push }
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-/* --------------------------
-       USUÁRIO LOGADO
----------------------------*/
+/* USUÁRIO LOGADO */
 const usuario = localStorage.getItem("usuarioLogado");
 const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
     || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -247,7 +250,7 @@ if (!usuario) {
     alert("❌ Faça login no site para usar o chat.");
 }
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
     authDomain: "coletivo-f34d4.firebaseapp.com",
@@ -261,7 +264,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* Marca online automaticamente */
+/* Marca usuário online */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 set(meRef, {
     nome: usuario,
@@ -279,7 +282,7 @@ window.addEventListener("beforeunload", () => {
     });
 });
 
-/* Lista de usuários */
+/* LISTAR USUÁRIOS ONLINE */
 onValue(ref(db, "chat/usuariosOnline"), snap => {
     const lista = document.getElementById("listaUsuarios");
     lista.innerHTML = "<h2>Online Agora</h2>";
@@ -302,8 +305,7 @@ onValue(ref(db, "chat/usuariosOnline"), snap => {
     });
 });
 
-
-/* Abrir chat */
+/* ABRIR CHAT */
 let conversandoCom = null;
 
 function abrirChat(nome, foto) {
@@ -322,19 +324,17 @@ function abrirChat(nome, foto) {
     carregarMensagens();
 }
 
-/* Voltar no mobile */
+/* VOLTAR NO CELULAR */
 function voltarLista() {
     document.getElementById("listaUsuarios").classList.remove("hidden");
 }
 
-
-/* ID Único */
+/* SALA PRIVADA */
 function sala(a, b) {
     return [a, b].sort().join("_");
 }
 
-
-/* Carregar mensagens */
+/* CARREGAR MENSAGENS */
 function carregarMensagens() {
     const caminho = sala(usuario, conversandoCom);
     const msgsRef = ref(db, "chat/conversas/" + caminho);
@@ -357,8 +357,7 @@ function carregarMensagens() {
     });
 }
 
-
-/* Enviar mensagem */
+/* ENVIAR MENSAGEM */
 document.getElementById("sendBtn").onclick = enviar;
 
 function enviar() {
