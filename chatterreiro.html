@@ -160,7 +160,7 @@ import { getDatabase, ref, set, onValue, push }
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 /* --------------------------
-   USUÁRIO LOGADO NO SEU SITE
+   USUÁRIO LOGADO NO SITE
 ---------------------------*/
 const usuario = localStorage.getItem("usuarioLogado");
 const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
@@ -171,7 +171,7 @@ if (!usuario) {
 }
 
 /* --------------------------
-   CONFIG DO SEU FIREBASE
+   FIREBASE DO SEU SISTEMA
 ---------------------------*/
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
@@ -187,17 +187,24 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* --------------------------
-   MARCAR USUÁRIO ONLINE
+   MOSTRAR ONLINE AUTOMÁTICO
 ---------------------------*/
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 set(meRef, {
     nome: usuario,
     foto: fotoPerfil,
-    online: true
+    online: true,
+    hora: Date.now()
 });
 
+/* Se fechar aba */
 window.addEventListener("beforeunload", () => {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+    set(meRef, {
+        nome: usuario,
+        foto: fotoPerfil,
+        online: false,
+        hora: Date.now()
+    });
 });
 
 /* --------------------------
@@ -248,7 +255,7 @@ function abrirChat(nome, foto) {
 }
 
 /* --------------------------
-   GERAR ID ÚNICO DA SALA
+   SALA PRIVADA
 ---------------------------*/
 function sala(a, b) {
     return [a, b].sort().join("_");
