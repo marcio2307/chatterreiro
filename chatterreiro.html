@@ -20,12 +20,13 @@ body {
     width: 100%;
     height: 100%;
     position: absolute;
+    left: 0;
+    top: 0;
     background: #050505;
     border-right: 2px solid #0f0;
     overflow-y: auto;
     z-index: 10;
     transition: 0.3s;
-    left: 0;
 }
 
 #listaUsuarios.hidden {
@@ -39,7 +40,6 @@ body {
     font-size: 22px;
 }
 
-/* Usuário */
 .userBox {
     display: flex;
     align-items: center;
@@ -67,6 +67,7 @@ body {
     border-radius: 50%;
     animation: blink 1s infinite;
 }
+
 @keyframes blink { 50% { opacity: 0.3; } }
 
 /* CHAT */
@@ -74,6 +75,8 @@ body {
     width: 100%;
     height: 100%;
     position: absolute;
+    top: 0;
+    left: 0;
     background: #000;
     display: flex;
     flex-direction: column;
@@ -91,19 +94,24 @@ body {
     font-weight: bold;
 }
 
-#chatHeader img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 2px solid #0f0;
-}
-
-#voltar {
+.botaoVoltar {
     font-size: 28px;
     font-weight: bold;
     color: #0f0;
     cursor: pointer;
-    display: block !important;
+    display: none;
+}
+
+#headerFoto {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #0f0;
+    display: none;
+}
+
+#headerNome {
+    font-size: 20px;
 }
 
 /* MENSAGENS */
@@ -165,10 +173,6 @@ body {
     cursor: pointer;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-    #voltar { display: block !important; }
-}
 </style>
 </head>
 
@@ -182,8 +186,9 @@ body {
 <!-- CHAT -->
 <div id="chatArea">
     <div id="chatHeader">
-        <span id="voltar" onclick="voltarLista()">←</span>
-        Selecione um usuário
+        <span class="botaoVoltar" onclick="voltarLista()">←</span>
+        <img id="headerFoto">
+        <span id="headerNome">Selecione um usuário</span>
     </div>
 
     <div id="mensagens"></div>
@@ -208,7 +213,7 @@ const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
 
 if (!usuario) alert("Faça login primeiro.");
 
-/* FIREBASE */
+/* FIREBASE CONFIG */
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
     authDomain: "coletivo-f34d4.firebaseapp.com",
@@ -222,7 +227,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ONLINE */
+/* MOSTRAR ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
 
@@ -230,7 +235,7 @@ window.addEventListener("beforeunload", () => {
     set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
 });
 
-/* LISTAR */
+/* LISTA ONLINE */
 onValue(ref(db, "chat/usuariosOnline"), snap => {
     const lista = document.getElementById("listaUsuarios");
     lista.innerHTML = "<h2>Online Agora</h2>";
@@ -258,14 +263,11 @@ let conversandoCom = null;
 function abrirChat(nome, foto) {
     conversandoCom = nome;
 
-    document.getElementById("chatHeader").innerHTML = `
-        <span id="voltar" onclick="voltarLista()">←</span>
-        <img src="${foto}">
-        ${nome}
-    `;
+    document.querySelector(".botaoVoltar").style.display = "block";
+    document.getElementById("headerFoto").style.display = "block";
 
-    // garante que apareça
-    document.getElementById("voltar").style.display = "block";
+    document.getElementById("headerFoto").src = foto;
+    document.getElementById("headerNome").textContent = nome;
 
     document.getElementById("listaUsuarios").classList.add("hidden");
     document.getElementById("msgInput").disabled = false;
@@ -277,6 +279,10 @@ function abrirChat(nome, foto) {
 /* VOLTAR */
 function voltarLista() {
     document.getElementById("listaUsuarios").classList.remove("hidden");
+
+    document.querySelector(".botaoVoltar").style.display = "none";
+    document.getElementById("headerFoto").style.display = "none";
+    document.getElementById("headerNome").textContent = "Selecione um usuário";
 }
 
 /* SALA PRIVADA */
