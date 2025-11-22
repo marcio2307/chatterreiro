@@ -308,11 +308,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* MOSTRAR ONLINE */
+/* REFERÊNCIA DO USUÁRIO ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
-set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
 
-/* 🔥🔥🔥 LÓGICA DE INATIVIDADE 60s – ADICIONADA AQUI 🔥🔥🔥 */
+/* 🔥🔥🔥 LÓGICA DE INATIVIDADE 3s – SÓ FICA ONLINE SE INTERAGIR 🔥🔥🔥 */
 let timerInatividade = null;
 
 function marcarOnline() {
@@ -323,22 +322,25 @@ function marcarOffline() {
     set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
 }
 
-function resetarInatividade() {
-    marcarOnline();  
+/* Começa como OFFLINE */
+marcarOffline();
+
+/* Qualquer interação → online e reinicia o timer de 3s */
+function registrarInteracao() {
+    marcarOnline();
     clearTimeout(timerInatividade);
     timerInatividade = setTimeout(() => {
         marcarOffline();
-    }, 60000); // 60 segundos
+    }, 3000); // 3 segundos
 }
 
+/* Eventos que contam como interação */
 ["mousemove","mousedown","keypress","touchstart","scroll"]
-.forEach(ev => document.addEventListener(ev, resetarInatividade));
-
-resetarInatividade();
+.forEach(ev => document.addEventListener(ev, registrarInteracao));
 /* 🔥🔥🔥 FIM DA LÓGICA DE INATIVIDADE 🔥🔥🔥 */
 
 window.addEventListener("beforeunload", () => {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+    marcarOffline();
 });
 
 /* LISTA ONLINE */
