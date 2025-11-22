@@ -9,7 +9,6 @@
 <audio id="somEnviar" src="https://marcio2307.github.io/terreiro/som.mp3"></audio>
 <audio id="somReceber" src="https://marcio2307.github.io/terreiro/som.mp3"></audio>
 
-
 <style>
 /* BLOQUEIA QUALQUER MOVIMENTO DE TELA */
 html, body {
@@ -45,6 +44,36 @@ body {
 
 #listaUsuarios.hidden { left: -100%; }
 
+/* 🔙 BOTÃO VOLTAR BONITO */
+.voltarSiteBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin: 15px;
+    padding: 8px 14px;
+    background: rgba(0,255,0,0.12);
+    border: 2px solid #0f0;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #0f0;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.voltarSiteBtn:hover {
+    background: rgba(0,255,0,0.25);
+    transform: scale(1.08);
+    box-shadow: 0 0 12px #0f0;
+}
+
+.voltarSeta {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* TÍTULO */
 #listaUsuarios h2 {
     text-align: center;
     padding: 12px;
@@ -148,7 +177,6 @@ body {
     word-break: break-word;
 }
 
-/* Rabinho */
 .msg::after {
     content: "";
     position: absolute;
@@ -195,7 +223,6 @@ body {
     bottom: 5px;
     position: absolute;
     opacity: 0.9;
-    filter: brightness(0) invert(67%) sepia(86%) saturate(748%) hue-rotate(61deg) brightness(129%);
 }
 
 /* ÁREA DE DIGITAR */
@@ -211,7 +238,7 @@ body {
     align-items: center;
 }
 
-/* CAMPO DE TEXTO */
+/* CAMPO */
 #msgInput {
     flex: 1;
     padding: 8px;
@@ -237,7 +264,7 @@ body {
 }
 </style>
 
-<!-- 🔓 DESBLOQUEIO DE ÁUDIO PARA CELULAR -->
+<!-- 🔓 DESBLOQUEIO DE ÁUDIO -->
 <script>
 document.addEventListener("click", () => {
     const a1 = document.getElementById("somEnviar");
@@ -254,6 +281,12 @@ document.addEventListener("click", () => {
 
 <!-- LISTA DE USUÁRIOS -->
 <div id="listaUsuarios">
+
+    <!-- 🔙 BOTÃO VOLTAR BONITO -->
+    <div class="voltarSiteBtn" onclick="window.location.href='https://marcio2307.github.io/terreiro/site.html'">
+    Voltar
+</div>
+
     <h2>Online Agora</h2>
 </div>
 
@@ -311,18 +344,10 @@ const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 
 /* PRESENÇA */
 function marcarOnline() {
-    set(meRef, { 
-        nome: usuario, 
-        foto: fotoPerfil, 
-        online: true 
-    });
+    set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
 }
 function marcarOffline() {
-    set(meRef, { 
-        nome: usuario, 
-        foto: fotoPerfil, 
-        online: false 
-    });
+    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
 }
 
 onDisconnect(meRef).set({
@@ -332,7 +357,6 @@ onDisconnect(meRef).set({
 });
 
 let ultimoToque = Date.now();
-let intervaloHeartbeat = null;
 
 function registrarInteracao() {
     ultimoToque = Date.now();
@@ -340,8 +364,8 @@ function registrarInteracao() {
 }
 
 [
-    "click", "touchstart", "keydown",
-    "mousemove", "wheel", "pointerdown", "pointerup"
+    "click","touchstart","keydown","mousemove",
+    "wheel","pointerdown","pointerup"
 ].forEach(ev => {
     document.addEventListener(ev, registrarInteracao, { passive: true });
 });
@@ -351,7 +375,7 @@ document.addEventListener("visibilitychange", () => {
     else registrarInteracao();
 });
 
-intervaloHeartbeat = setInterval(() => {
+setInterval(() => {
     const parado = Date.now() - ultimoToque;
     if (parado >= 60000) marcarOffline();
     else marcarOnline();
@@ -365,7 +389,13 @@ window.addEventListener("beforeunload", marcarOffline);
 /* LISTA ONLINE */
 onValue(ref(db, "chat/usuariosOnline"), snap => {
     const lista = document.getElementById("listaUsuarios");
-    lista.innerHTML = "<h2>Online Agora</h2>";
+
+    lista.innerHTML = `
+        <div class='voltarSiteBtn' onclick="window.location.href='https://marcio2307.github.io/terreiro/site.html'">
+            <span class='voltarSeta'>←</span> Voltar
+        </div>
+        <h2>Online Agora</h2>
+    `;
 
     snap.forEach(s => {
         const u = s.val();
