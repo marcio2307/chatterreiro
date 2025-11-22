@@ -375,11 +375,17 @@ document.addEventListener("visibilitychange", () => {
     else registrarInteracao();
 });
 
+/* 🔥 OFFLINE após 2 MINUTOS de inatividade */
 setInterval(() => {
     const parado = Date.now() - ultimoToque;
-    if (parado >= 60000) marcarOffline();
-    else marcarOnline();
-}, 10000);
+
+    if (parado >= 120000) { 
+        marcarOffline(); // ⛔ 2 MINUTOS parado
+    } else {
+        marcarOnline(); // 👌 ativo
+    }
+
+}, 10000); // verifica a cada 10s
 
 registrarInteracao();
 
@@ -519,3 +525,4 @@ function enviar() {
 
 </body>
 </html>
+
