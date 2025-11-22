@@ -287,8 +287,16 @@ document.addEventListener("click", () => {
 <script type="module">
 import { initializeApp } 
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove, update }
-  from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { 
+    getDatabase, 
+    ref, 
+    set, 
+    onValue, 
+    push, 
+    remove, 
+    update,
+    onDisconnect   // ← AQUI! ESSENCIAL!
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const usuario = localStorage.getItem("usuarioLogado");
 const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
@@ -312,59 +320,76 @@ const db = getDatabase(app);
 /* REFERÊNCIA DO USUÁRIO ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 
-/* 🔥🔥🔥 LÓGICA DE PRESENÇA (WEB + APP FÁBRICA) 🔥🔥🔥 */
-let timerInatividade = null;
+/* 🔥🔥🔥 PRESENÇA UNIVERSAL COMPATÍVEL COM TODOS NAVEGADORES 🔥🔥🔥 */
+
 let ultimoToque = Date.now();
+let intervaloHeartbeat = null;
 
 /* Marca ONLINE */
 function marcarOnline() {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
+    set(meRef, { 
+        nome: usuario, 
+        foto: fotoPerfil, 
+        online: true 
+    });
 }
 
 /* Marca OFFLINE */
 function marcarOffline() {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+    set(meRef, { 
+        nome: usuario, 
+        foto: fotoPerfil, 
+        online: false 
+    });
 }
 
-/* Começa OFFLINE até mexer */
-marcarOffline();
+/* GARANTIA NO SERVIDOR: se desconectar → OFFLINE */
+onDisconnect(meRef).set({
+    nome: usuario,
+    foto: fotoPerfil,
+    online: false
+});
 
-/* Registra interação real do usuário */
+/* Detecta qualquer interação útil */
 function registrarInteracao() {
     ultimoToque = Date.now();
     marcarOnline();
-    clearTimeout(timerInatividade);
-    timerInatividade = setTimeout(() => {
-        // Só desloga por inatividade se a aba estiver visível
-        if (!document.hidden) {
-            marcarOffline();
-        }
-    }, 30000); // 30 segundos
-
 }
 
-/* Eventos que contam como interação (compatível com app) */
-["click", "touchstart", "keydown"].forEach(ev => {
-    document.addEventListener(ev, registrarInteracao);
+/* Eventos de interação */
+[
+    "click", "touchstart", "keydown", "touchmove",
+    "mousemove", "wheel", "pointerdown", "pointerup"
+].forEach(ev => {
+    document.addEventListener(ev, registrarInteracao, { passive: true });
 });
 
-/* Troca de aba / minimizou app (em WebView também vira hidden) */
+/* Quando minimiza ou volta */
 document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
+    if (document.hidden) marcarOffline();
+    else registrarInteracao();
+});
+
+/* Heartbeat universal (funciona até quando nada dispara) */
+if (intervaloHeartbeat) clearInterval(intervaloHeartbeat);
+
+intervaloHeartbeat = setInterval(() => {
+    const agora = Date.now();
+    const parado = agora - ultimoToque;
+
+    if (parado >= 60000) {
         marcarOffline();
     } else {
-        registrarInteracao();
+        marcarOnline();
     }
-});
+}, 10000); // verifica a cada 10s
 
-/* Fechar/atualizar a página (app ou navegador) */
-window.addEventListener("beforeunload", () => {
-    marcarOffline();
-});
-
-/* Ao carregar a tela do app, considera ativo imediatamente */
+/* Marca ativo ao entrar */
 registrarInteracao();
-/* 🔥🔥🔥 FIM DA LÓGICA DE PRESENÇA 🔥🔥🔥 */
+
+/* Deslogar corretamente em navegadores problemáticos */
+window.addEventListener("pagehide", marcarOffline);
+window.addEventListener("beforeunload", marcarOffline);
 
 
 /* LISTA ONLINE */
@@ -524,5 +549,6 @@ function monitorarDigitando() {
 
 </body>
 </html>
+
 
 
