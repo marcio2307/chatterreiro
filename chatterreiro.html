@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat</title>
 
+<!-- 🔊 SOM – use o arquivo som.mp3 na mesma pasta do HTML -->
+<audio id="somEnviar" src="som.mp3"></audio>
+<audio id="somReceber" src="som.mp3"></audio>
+
 <style>
 /* BLOQUEIA QUALQUER MOVIMENTO DE TELA */
 html, body {
@@ -155,18 +159,17 @@ body {
     border-right: 10px solid transparent;
 }
 
-/* BALÃO ENVIADO — CORRIGIDO */
+/* BALÃO ENVIADO */
 .msg.me {
     background: #065f06;
     border: 1px solid #0f0;
     color: #fff;
     margin-left: auto;
-    margin-right: 40px;  /* ← AFASTAMENTO CORRIGIDO */
+    margin-right: 40px;
     border-radius: 18px;
     border-bottom-right-radius: 0;
 }
 
-/* Rabinho enviado */
 .msg.me::after {
     content: "";
     position: absolute;
@@ -394,6 +397,13 @@ function carregarMensagens() {
             `;
 
             box.appendChild(div);
+
+
+            /* 🔊 SOM AO RECEBER */
+            if (d.de !== usuario) {
+                document.getElementById("somReceber").play();
+            }
+
         });
 
         box.scrollTop = box.scrollHeight;
@@ -407,6 +417,7 @@ window.apagarMsg = function(caminho, id) {
 
 /* ENVIAR */
 document.getElementById("sendBtn").onclick = enviar;
+
 function enviar() {
     const input = document.getElementById("msgInput");
     if (!input.value) return;
@@ -417,6 +428,9 @@ function enviar() {
         hora: Date.now()
     });
 
+    /* 🔊 SOM AO ENVIAR */
+    document.getElementById("somEnviar").play();
+
     update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
         [usuario]: false
     });
@@ -424,8 +438,7 @@ function enviar() {
     input.value = "";
 }
 
-/* --------------- DIGITANDO EM TEMPO REAL (CORRIGIDO) --------------- */
-
+/* DIGITANDO EM TEMPO REAL */
 let digitandoListener = null;
 
 function monitorarDigitando() {
