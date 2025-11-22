@@ -153,8 +153,6 @@ body {
     position: absolute;
     left: -8px;
     bottom: 0;
-    width: 0;
-    height: 0;
     border-top: 10px solid #013801;
     border-right: 10px solid transparent;
 }
@@ -175,8 +173,6 @@ body {
     position: absolute;
     right: -8px;
     bottom: 0;
-    width: 0;
-    height: 0;
     border-top: 10px solid #065f06;
     border-left: 10px solid transparent;
 }
@@ -315,6 +311,31 @@ const db = getDatabase(app);
 /* MOSTRAR ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
+
+/* 🔥🔥🔥 LÓGICA DE INATIVIDADE 60s – ADICIONADA AQUI 🔥🔥🔥 */
+let timerInatividade = null;
+
+function marcarOnline() {
+    set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
+}
+
+function marcarOffline() {
+    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+}
+
+function resetarInatividade() {
+    marcarOnline();  
+    clearTimeout(timerInatividade);
+    timerInatividade = setTimeout(() => {
+        marcarOffline();
+    }, 60000); // 60 segundos
+}
+
+["mousemove","mousedown","keypress","touchstart","scroll"]
+.forEach(ev => document.addEventListener(ev, resetarInatividade));
+
+resetarInatividade();
+/* 🔥🔥🔥 FIM DA LÓGICA DE INATIVIDADE 🔥🔥🔥 */
 
 window.addEventListener("beforeunload", () => {
     set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
