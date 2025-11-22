@@ -126,23 +126,56 @@ body {
     padding-bottom: 120px !important;
 }
 
-/* BOLHA */
+/* BALÃO RECEBIDO — Estilo WhatsApp */
 .msg {
     display: inline-block;
     max-width: 75%;
     padding: 10px 14px;
     background: #013801;
     border: 1px solid #0f0;
-    border-radius: 15px;
+    border-radius: 18px;
+    border-bottom-left-radius: 0px;
     font-size: 15px;
+    color: #0f0;
+    margin-right: auto;
+    margin-left: 0;
     position: relative;
     word-break: break-word;
 }
 
+/* Rabinho do balão recebido */
+.msg::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-top: 10px solid #013801;
+    border-right: 10px solid transparent;
+}
+
+/* BALÃO ENVIADO — Estilo WhatsApp */
 .msg.me {
-    margin-left: auto;
     background: #065f06;
-    margin-right: 30px; /* ✔ afastamento exato que você pediu */
+    border: 1px solid #0f0;
+    color: #fff;
+    margin-left: auto;
+    margin-right: 10px;
+    border-radius: 18px;
+    border-bottom-right-radius: 0;
+}
+
+/* Rabinho do balão enviado */
+.msg.me::after {
+    content: "";
+    position: absolute;
+    right: -8px;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-top: 10px solid #065f06;
+    border-left: 10px solid transparent;
 }
 
 /* HORA */
@@ -153,7 +186,7 @@ body {
     text-align: right;
 }
 
-/* LIXEIRA — FORA DO BALÃO (estilo original) */
+/* LIXEIRA */
 .lixeiraBtn {
     width: 18px;
     height: 18px;
@@ -391,7 +424,7 @@ function enviar() {
     input.value = "";
 }
 
-/* DIGITANDO */
+/* DIGITANDO EM TEMPO REAL */
 function monitorarDigitando() {
     const input = document.getElementById("msgInput");
 
