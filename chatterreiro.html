@@ -40,6 +40,7 @@ body {
     font-size: 22px;
 }
 
+/* Usuário */
 .userBox {
     display: flex;
     align-items: center;
@@ -67,7 +68,6 @@ body {
     border-radius: 50%;
     animation: blink 1s infinite;
 }
-
 @keyframes blink { 50% { opacity: 0.3; } }
 
 /* CHAT */
@@ -172,7 +172,6 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
-
 </style>
 </head>
 
@@ -186,7 +185,7 @@ body {
 <!-- CHAT -->
 <div id="chatArea">
     <div id="chatHeader">
-        <span class="botaoVoltar" onclick="voltarLista()">←</span>
+        <span class="botaoVoltar" onclick="window.voltarLista()">←</span>
         <img id="headerFoto">
         <span id="headerNome">Selecione um usuário</span>
     </div>
@@ -213,7 +212,7 @@ const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
 
 if (!usuario) alert("Faça login primeiro.");
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
     authDomain: "coletivo-f34d4.firebaseapp.com",
@@ -252,21 +251,24 @@ onValue(ref(db, "chat/usuariosOnline"), snap => {
             ${u.nome}
         `;
 
-        div.onclick = () => abrirChat(u.nome, u.foto);
+        div.onclick = () => window.abrirChat(u.nome, u.foto);
         lista.appendChild(div);
     });
 });
 
-/* ABRIR CHAT */
+/* ------- FUNÇÕES NO WINDOW (por causa do type="module") ------- */
+
 let conversandoCom = null;
 
-function abrirChat(nome, foto) {
+/* ABRIR CHAT */
+window.abrirChat = function(nome, foto) {
     conversandoCom = nome;
 
     document.querySelector(".botaoVoltar").style.display = "block";
-    document.getElementById("headerFoto").style.display = "block";
+    const headerFoto = document.getElementById("headerFoto");
+    headerFoto.style.display = "block";
+    headerFoto.src = foto;
 
-    document.getElementById("headerFoto").src = foto;
     document.getElementById("headerNome").textContent = nome;
 
     document.getElementById("listaUsuarios").classList.add("hidden");
@@ -274,21 +276,25 @@ function abrirChat(nome, foto) {
     document.getElementById("sendBtn").disabled = false;
 
     carregarMensagens();
-}
+};
 
-/* VOLTAR */
-function voltarLista() {
+/* VOLTAR PARA LISTA */
+window.voltarLista = function() {
     document.getElementById("listaUsuarios").classList.remove("hidden");
 
     document.querySelector(".botaoVoltar").style.display = "none";
     document.getElementById("headerFoto").style.display = "none";
     document.getElementById("headerNome").textContent = "Selecione um usuário";
-}
+
+    document.getElementById("msgInput").disabled = true;
+    document.getElementById("sendBtn").disabled = true;
+    document.getElementById("mensagens").innerHTML = "";
+};
 
 /* SALA PRIVADA */
 function sala(a,b){ return [a,b].sort().join("_"); }
 
-/* MENSAGENS */
+/* CARREGAR MENSAGENS */
 function carregarMensagens() {
     const msgsRef = ref(db, "chat/conversas/" + sala(usuario, conversandoCom));
 
