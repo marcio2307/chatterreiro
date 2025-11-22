@@ -122,7 +122,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-bottom: 120px;
+
+    /* CORRIGIDO — AUMENTADO O ESPAÇO PARA NÃO FICAR ATRÁS DO INPUT */
+    padding-bottom: 150px !important;
 }
 
 .msg {
@@ -149,6 +151,7 @@ body {
     gap: 10px;
     padding: 10px 12px;
     box-sizing: border-box;
+    background: #000;
 }
 
 #msgInput {
@@ -205,14 +208,12 @@ import { initializeApp }
 import { getDatabase, ref, set, onValue, push }
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-/* USUÁRIO */
 const usuario = localStorage.getItem("usuarioLogado");
 const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
  || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 if (!usuario) alert("Faça login primeiro.");
 
-/* FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
     authDomain: "coletivo-f34d4.firebaseapp.com",
@@ -255,8 +256,6 @@ onValue(ref(db, "chat/usuariosOnline"), snap => {
         lista.appendChild(div);
     });
 });
-
-/* ------- FUNÇÕES NO WINDOW (por causa do type="module") ------- */
 
 let conversandoCom = null;
 
