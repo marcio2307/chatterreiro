@@ -129,7 +129,7 @@ body {
 /* BOLHA */
 .msg {
     display: inline-block;
-    max-width: 75%; /* ✔ limite igual WhatsApp */
+    max-width: 75%;
     padding: 10px 14px;
     background: #013801;
     border: 1px solid #0f0;
@@ -152,16 +152,20 @@ body {
     text-align: right;
 }
 
-/* LIXEIRA — FORA DO BALÃO */
+/* LIXEIRA — AGORA MAIS VISÍVEL */
 .lixeiraBtn {
-    width: 18px;
-    height: 18px;
+    width: 24px;            /* aumentado */
+    height: 24px;
     cursor: pointer;
-    right: -28px;  /* ✔ fora do balão */
+    right: -32px;           /* mesma posição */
     bottom: 5px;
     position: absolute;
-    opacity: 0.9;
-    filter: brightness(0) invert(67%) sepia(86%) saturate(748%) hue-rotate(61deg) brightness(129%);
+    opacity: 1;             /* mais forte */
+    filter: 
+        brightness(500%) 
+        contrast(200%) 
+        saturate(200%) 
+        drop-shadow(0 0 5px #0f0);  /* glow verde */
 }
 
 /* ÁREA DE DIGITAR */
@@ -188,7 +192,7 @@ body {
     font-size: 15px;
 }
 
-/* BOTÃO ENVIAR — AJUSTADO */
+/* BOTÃO ENVIAR */
 #sendBtn {
     width: 44px;
     height: 44px;
@@ -199,7 +203,7 @@ body {
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
-    margin-right: 14px; /* ✔ mais para a esquerda */
+    margin-right: 14px;
 }
 
 /* DIGITANDO */
