@@ -235,18 +235,9 @@ body {
     cursor: pointer;
     margin-right: 14px;
 }
-
-/* DIGITANDO */
-#digitandoStatus {
-    font-size: 13px;
-    color: #0f0;
-    opacity: 0.7;
-    margin-left: 12px;
-    margin-top: -12px;
-}
 </style>
 
-<!-- 🔓 DESBLOQUEIO DE ÁUDIO – ESSENCIAL PARA CELULAR -->
+<!-- 🔓 DESBLOQUEIO DE ÁUDIO PARA CELULAR -->
 <script>
 document.addEventListener("click", () => {
     const a1 = document.getElementById("somEnviar");
@@ -275,7 +266,6 @@ document.addEventListener("click", () => {
     </div>
 
     <div id="mensagens"></div>
-    <div id="digitandoStatus"></div>
 
     <div id="inputArea">
         <input id="msgInput" placeholder="Digite..." disabled>
@@ -295,7 +285,7 @@ import {
     push, 
     remove, 
     update,
-    onDisconnect   // ← AQUI! ESSENCIAL!
+    onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const usuario = localStorage.getItem("usuarioLogado");
@@ -317,15 +307,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* REFERÊNCIA DO USUÁRIO ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 
-/* 🔥🔥🔥 PRESENÇA UNIVERSAL COMPATÍVEL COM TODOS NAVEGADORES 🔥🔥🔥 */
-
-let ultimoToque = Date.now();
-let intervaloHeartbeat = null;
-
-/* Marca ONLINE */
+/* PRESENÇA */
 function marcarOnline() {
     set(meRef, { 
         nome: usuario, 
@@ -333,8 +317,6 @@ function marcarOnline() {
         online: true 
     });
 }
-
-/* Marca OFFLINE */
 function marcarOffline() {
     set(meRef, { 
         nome: usuario, 
@@ -343,54 +325,42 @@ function marcarOffline() {
     });
 }
 
-/* GARANTIA NO SERVIDOR: se desconectar → OFFLINE */
 onDisconnect(meRef).set({
     nome: usuario,
     foto: fotoPerfil,
     online: false
 });
 
-/* Detecta qualquer interação útil */
+let ultimoToque = Date.now();
+let intervaloHeartbeat = null;
+
 function registrarInteracao() {
     ultimoToque = Date.now();
     marcarOnline();
 }
 
-/* Eventos de interação */
 [
-    "click", "touchstart", "keydown", "touchmove",
+    "click", "touchstart", "keydown",
     "mousemove", "wheel", "pointerdown", "pointerup"
 ].forEach(ev => {
     document.addEventListener(ev, registrarInteracao, { passive: true });
 });
 
-/* Quando minimiza ou volta */
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) marcarOffline();
     else registrarInteracao();
 });
 
-/* Heartbeat universal (funciona até quando nada dispara) */
-if (intervaloHeartbeat) clearInterval(intervaloHeartbeat);
-
 intervaloHeartbeat = setInterval(() => {
-    const agora = Date.now();
-    const parado = agora - ultimoToque;
+    const parado = Date.now() - ultimoToque;
+    if (parado >= 60000) marcarOffline();
+    else marcarOnline();
+}, 10000);
 
-    if (parado >= 60000) {
-        marcarOffline();
-    } else {
-        marcarOnline();
-    }
-}, 10000); // verifica a cada 10s
-
-/* Marca ativo ao entrar */
 registrarInteracao();
 
-/* Deslogar corretamente em navegadores problemáticos */
 window.addEventListener("pagehide", marcarOffline);
 window.addEventListener("beforeunload", marcarOffline);
-
 
 /* LISTA ONLINE */
 onValue(ref(db, "chat/usuariosOnline"), snap => {
@@ -431,7 +401,6 @@ window.abrirChat = function(nome, foto) {
     document.getElementById("sendBtn").disabled = false;
 
     carregarMensagens();
-    monitorarDigitando();
 };
 
 /* VOLTAR */
@@ -444,7 +413,6 @@ window.voltarLista = function() {
     document.getElementById("msgInput").disabled = true;
     document.getElementById("sendBtn").disabled = true;
     document.getElementById("mensagens").innerHTML = "";
-    document.getElementById("digitandoStatus").textContent = "";
 };
 
 /* SALA PRIVADA */
@@ -494,7 +462,7 @@ function carregarMensagens() {
     });
 }
 
-/* APAGAR MENSAGEM */
+/* APAGAR */
 window.apagarMsg = function(caminho, id) {
     remove(ref(db, caminho + "/" + id));
 };
@@ -514,41 +482,10 @@ function enviar() {
 
     document.getElementById("somEnviar").play().catch(()=>{});
 
-    update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
-        [usuario]: false
-    });
-
     input.value = "";
-}
-
-/* DIGITANDO EM TEMPO REAL */
-let digitandoListener = null;
-
-function monitorarDigitando() {
-    const input = document.getElementById("msgInput");
-    const caminho = "chat/digitando/" + sala(usuario, conversandoCom);
-
-    input.oninput = () => {
-        update(ref(db, caminho), {
-            [usuario]: input.value.length > 0
-        });
-    };
-
-    if (digitandoListener) digitandoListener();
-
-    digitandoListener = onValue(ref(db, caminho), snap => {
-        const data = snap.val() || {};
-        const digit = Object.keys(data).find(n => n !== usuario && data[n]);
-
-        document.getElementById("digitandoStatus").textContent =
-            digit ? `${digit} está digitando...` : "";
-    });
 }
 
 </script>
 
 </body>
 </html>
-
-
-
