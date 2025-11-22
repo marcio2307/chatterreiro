@@ -122,9 +122,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-
-    /* CORRIGIDO — AUMENTADO O ESPAÇO PARA NÃO FICAR ATRÁS DO INPUT */
-    padding-bottom: 150px !important;
+    padding-bottom: 120px !important; /* Agora nunca cobre o input */
 }
 
 .msg {
@@ -134,6 +132,8 @@ body {
     border: 1px solid #0f0;
     border-radius: 14px;
     font-size: 15px;
+    position: relative;
+    word-wrap: break-word;
 }
 
 .msg.me {
@@ -141,17 +141,43 @@ body {
     background: #064f06;
 }
 
+/* Hora */
+.msgHora {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* Menu de opções */
+.opcoesMsg {
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    background: #0f0;
+    color: #000;
+    padding: 5px 7px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+.msg.me:hover .opcoesMsg {
+    display: block;
+}
+
 /* BARRA FLUTUANTE */
 #inputArea {
     position: absolute;
-    bottom: 5px;
+    bottom: 0;
     left: 0;
     width: 100%;
     display: flex;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 12px;
     box-sizing: border-box;
     background: #000;
+    border-top: 2px solid #0f0;
 }
 
 #msgInput {
@@ -205,7 +231,7 @@ body {
 <script type="module">
 import { initializeApp } 
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push }
+import { getDatabase, ref, set, onValue, push, remove }
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const usuario = localStorage.getItem("usuarioLogado");
@@ -295,23 +321,38 @@ function sala(a,b){ return [a,b].sort().join("_"); }
 
 /* CARREGAR MENSAGENS */
 function carregarMensagens() {
-    const msgsRef = ref(db, "chat/conversas/" + sala(usuario, conversandoCom));
+    const caminho = "chat/conversas/" + sala(usuario, conversandoCom);
+    const msgsRef = ref(db, caminho);
 
     onValue(msgsRef, snap => {
         const box = document.getElementById("mensagens");
         box.innerHTML = "";
 
         snap.forEach(m => {
+            const id = m.key;
             const d = m.val();
             const div = document.createElement("div");
+
             div.className = "msg" + (d.de === usuario ? " me" : "");
-            div.textContent = d.texto;
+            div.innerHTML = `
+                <span>${d.texto}</span>
+                <div class="msgHora">${new Date(d.hora).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</div>
+                ${d.de === usuario ? `<div class="opcoesMsg" onclick="apagarMsg('${caminho}','${id}')">Excluir</div>` : ""}
+            `;
+
             box.appendChild(div);
         });
 
         box.scrollTop = box.scrollHeight;
     });
 }
+
+/* APAGAR MENSAGEM */
+window.apagarMsg = function(caminho, id) {
+    if (confirm("Excluir esta mensagem para todos?")) {
+        remove(ref(db, caminho + "/" + id));
+    }
+};
 
 /* ENVIAR */
 document.getElementById("sendBtn").onclick = enviar;
