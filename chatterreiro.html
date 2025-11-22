@@ -38,9 +38,7 @@ body {
     transition: 0.3s;
 }
 
-#listaUsuarios.hidden {
-    left: -100%;
-}
+#listaUsuarios.hidden { left: -100%; }
 
 #listaUsuarios h2 {
     text-align: center;
@@ -58,9 +56,7 @@ body {
     cursor: pointer;
 }
 
-.userBox:hover {
-    background: rgba(0,255,0,0.15);
-}
+.userBox:hover { background: rgba(0,255,0,0.15); }
 
 .userBox img {
     width: 48px;
@@ -126,14 +122,14 @@ body {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 25px;
     padding-bottom: 120px !important;
 }
 
 /* BOLHA */
 .msg {
     display: inline-block;
-    max-width: 75%;
+    max-width: 75%; /* ✔ limite igual WhatsApp */
     padding: 10px 14px;
     background: #013801;
     border: 1px solid #0f0;
@@ -156,19 +152,19 @@ body {
     text-align: right;
 }
 
-/* LIXEIRA */
+/* LIXEIRA — FORA DO BALÃO */
 .lixeiraBtn {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    right: -28px;  /* ✔ fora do balão */
+    bottom: 5px;
     position: absolute;
-    right: 8px;
-    bottom: 6px;
-    opacity: 0.85;
-    filter: brightness(0) saturate(100%) invert(67%) sepia(86%) saturate(748%) hue-rotate(61deg) brightness(129%) contrast(101%);
+    opacity: 0.9;
+    filter: brightness(0) invert(67%) sepia(86%) saturate(748%) hue-rotate(61deg) brightness(129%);
 }
 
-/* ÁREA DE DIGITAR — DIMINUÍDA E FIXA */
+/* ÁREA DE DIGITAR */
 #inputArea {
     position: absolute;
     bottom: 0;
@@ -181,7 +177,7 @@ body {
     align-items: center;
 }
 
-/* CAMPO DE TEXTO REDUZIDO */
+/* CAMPO DE TEXTO */
 #msgInput {
     flex: 1;
     padding: 8px;
@@ -192,7 +188,7 @@ body {
     font-size: 15px;
 }
 
-/* BOTÃO ENVIAR — APENAS AJUSTADO PARA A ESQUERDA */
+/* BOTÃO ENVIAR — AJUSTADO */
 #sendBtn {
     width: 44px;
     height: 44px;
@@ -203,16 +199,16 @@ body {
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
-    margin-right: 10px; /* ◀️ EXATAMENTE O QUE VOCÊ PEDIU */
+    margin-right: 14px; /* ✔ mais para a esquerda */
 }
 
-/* TEXTO DIGITANDO */
+/* DIGITANDO */
 #digitandoStatus {
-    color: #0f0;
     font-size: 13px;
+    color: #0f0;
     opacity: 0.7;
-    margin-left: 10px;
-    margin-bottom: 5px;
+    margin-left: 12px;
+    margin-top: -12px;
 }
 </style>
 </head>
@@ -233,7 +229,6 @@ body {
     </div>
 
     <div id="mensagens"></div>
-
     <div id="digitandoStatus"></div>
 
     <div id="inputArea">
@@ -298,12 +293,9 @@ onValue(ref(db, "chat/usuariosOnline"), snap => {
     });
 });
 
+/* ABRIR CHAT */
 let conversandoCom = null;
 
-/* SALA PRIVADA */
-function sala(a,b){ return [a,b].sort().join("_"); }
-
-/* ABRIR CHAT */
 window.abrirChat = function(nome, foto) {
     conversandoCom = nome;
 
@@ -313,7 +305,6 @@ window.abrirChat = function(nome, foto) {
     headerFoto.src = foto;
 
     document.getElementById("headerNome").textContent = nome;
-
     document.getElementById("listaUsuarios").classList.add("hidden");
     document.getElementById("msgInput").disabled = false;
     document.getElementById("sendBtn").disabled = false;
@@ -324,17 +315,19 @@ window.abrirChat = function(nome, foto) {
 
 /* VOLTAR */
 window.voltarLista = function() {
+    conversandoCom = null;
     document.getElementById("listaUsuarios").classList.remove("hidden");
     document.querySelector(".botaoVoltar").style.display = "none";
     document.getElementById("headerFoto").style.display = "none";
-    document.getElementById("headerNome")
-        .textContent = "Selecione um usuário";
-
+    document.getElementById("headerNome").textContent = "Selecione um usuário";
     document.getElementById("msgInput").disabled = true;
     document.getElementById("sendBtn").disabled = true;
     document.getElementById("mensagens").innerHTML = "";
     document.getElementById("digitandoStatus").textContent = "";
 };
+
+/* SALA PRIVADA */
+function sala(a,b){ return [a,b].sort().join("_"); }
 
 /* CARREGAR MENSAGENS */
 function carregarMensagens() {
@@ -345,6 +338,7 @@ function carregarMensagens() {
         box.innerHTML = "";
 
         snap.forEach(m => {
+            const id = m.key;
             const d = m.val();
 
             const div = document.createElement("div");
@@ -352,11 +346,17 @@ function carregarMensagens() {
 
             div.innerHTML = `
                 <span>${d.texto}</span>
-                <div class="msgHora">
-                    ${new Date(d.hora).toLocaleTimeString(
-                        "pt-BR", {hour:"2-digit",minute:"2-digit"}
-                    )}
-                </div>
+                <div class="msgHora">${
+                    new Date(d.hora).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
+                }</div>
+
+                ${
+                    d.de === usuario 
+                    ? `<img src="https://cdn-icons-png.flaticon.com/512/484/484662.png"
+                           class="lixeiraBtn"
+                           onclick="apagarMsg('${caminho}','${id}')">`
+                    : ""
+                }
             `;
 
             box.appendChild(div);
@@ -365,6 +365,11 @@ function carregarMensagens() {
         box.scrollTop = box.scrollHeight;
     });
 }
+
+/* APAGAR MENSAGEM */
+window.apagarMsg = function(caminho, id) {
+    remove(ref(db, caminho + "/" + id));
+};
 
 /* ENVIAR */
 document.getElementById("sendBtn").onclick = enviar;
@@ -385,7 +390,7 @@ function enviar() {
     input.value = "";
 }
 
-/* SISTEMA DIGITANDO */
+/* DIGITANDO */
 function monitorarDigitando() {
     const input = document.getElementById("msgInput");
 
@@ -399,11 +404,11 @@ function monitorarDigitando() {
         ref(db, "chat/digitando/" + sala(usuario, conversandoCom)),
         snap => {
             const data = snap.val() || {};
-            const digitando = Object.keys(data)
+            const digit = Object.keys(data)
                 .filter(n => n !== usuario && data[n])[0];
 
             document.getElementById("digitandoStatus").textContent =
-                digitando ? digitando + " está digitando..." : "";
+                digit ? digit + " está digitando..." : "";
         }
     );
 }
