@@ -248,6 +248,18 @@ body {
     margin-top: -12px;
 }
 </style>
+
+<!-- 🔓 DESBLOQUEIO DE ÁUDIO – ESSENCIAL PARA CELULAR -->
+<script>
+document.addEventListener("click", () => {
+    const a1 = document.getElementById("somEnviar");
+    const a2 = document.getElementById("somReceber");
+
+    if (a1) { a1.play().catch(()=>{}); a1.pause(); a1.currentTime = 0; }
+    if (a2) { a2.play().catch(()=>{}); a2.pause(); a2.currentTime = 0; }
+}, { once: true });
+</script>
+
 </head>
 
 <body>
@@ -398,12 +410,12 @@ function carregarMensagens() {
 
             box.appendChild(div);
 
-
-            /* 🔊 SOM AO RECEBER */
+            /* 🔊 SOM AO RECEBER – corrigido */
             if (d.de !== usuario) {
-                document.getElementById("somReceber").play();
+                setTimeout(() => {
+                    document.getElementById("somReceber").play().catch(()=>{});
+                }, 50);
             }
-
         });
 
         box.scrollTop = box.scrollHeight;
@@ -428,8 +440,8 @@ function enviar() {
         hora: Date.now()
     });
 
-    /* 🔊 SOM AO ENVIAR */
-    document.getElementById("somEnviar").play();
+    /* 🔊 SOM AO ENVIAR – corrigido */
+    document.getElementById("somEnviar").play().catch(()=>{});
 
     update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
         [usuario]: false
