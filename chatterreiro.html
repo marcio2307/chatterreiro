@@ -311,37 +311,59 @@ const db = getDatabase(app);
 /* REFERÊNCIA DO USUÁRIO ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 
-/* 🔥🔥🔥 LÓGICA DE INATIVIDADE 3s – SÓ FICA ONLINE SE INTERAGIR 🔥🔥🔥 */
+/* 🔥🔥🔥 LÓGICA DE PRESENÇA (WEB + APP FÁBRICA) 🔥🔥🔥 */
 let timerInatividade = null;
+let ultimoToque = Date.now();
 
+/* Marca ONLINE */
 function marcarOnline() {
     set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
 }
 
+/* Marca OFFLINE */
 function marcarOffline() {
     set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
 }
 
-/* Começa como OFFLINE */
+/* Começa OFFLINE até mexer */
 marcarOffline();
 
-/* Qualquer interação → online e reinicia o timer de 3s */
+/* Registra interação real do usuário */
 function registrarInteracao() {
+    ultimoToque = Date.now();
     marcarOnline();
     clearTimeout(timerInatividade);
     timerInatividade = setTimeout(() => {
-        marcarOffline();
-    }, 3000); // 3 segundos
+        // Só desloga por inatividade se a aba estiver visível
+        if (!document.hidden) {
+            marcarOffline();
+        }
+    }, 3000);
 }
 
-/* Eventos que contam como interação */
-["mousemove","mousedown","keypress","touchstart","scroll"]
-.forEach(ev => document.addEventListener(ev, registrarInteracao));
-/* 🔥🔥🔥 FIM DA LÓGICA DE INATIVIDADE 🔥🔥🔥 */
+/* Eventos que contam como interação (compatível com app) */
+["click", "touchstart", "keydown"].forEach(ev => {
+    document.addEventListener(ev, registrarInteracao);
+});
 
+/* Troca de aba / minimizou app (em WebView também vira hidden) */
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        marcarOffline();
+    } else {
+        registrarInteracao();
+    }
+});
+
+/* Fechar/atualizar a página (app ou navegador) */
 window.addEventListener("beforeunload", () => {
     marcarOffline();
 });
+
+/* Ao carregar a tela do app, considera ativo imediatamente */
+registrarInteracao();
+/* 🔥🔥🔥 FIM DA LÓGICA DE PRESENÇA 🔥🔥🔥 */
+
 
 /* LISTA ONLINE */
 onValue(ref(db, "chat/usuariosOnline"), snap => {
@@ -433,7 +455,7 @@ function carregarMensagens() {
 
             box.appendChild(div);
 
-            /* 🔊 SOM AO RECEBER – corrigido */
+            /* 🔊 SOM AO RECEBER */
             if (d.de !== usuario) {
                 setTimeout(() => {
                     document.getElementById("somReceber").play().catch(()=>{});
@@ -463,7 +485,6 @@ function enviar() {
         hora: Date.now()
     });
 
-    /* 🔊 SOM AO ENVIAR – corrigido */
     document.getElementById("somEnviar").play().catch(()=>{});
 
     update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
