@@ -192,7 +192,7 @@ body {
     font-size: 15px;
 }
 
-/* BOTÃO ENVIAR MAIS À ESQUERDA & MENOR */
+/* BOTÃO ENVIAR — APENAS AJUSTADO PARA A ESQUERDA */
 #sendBtn {
     width: 44px;
     height: 44px;
@@ -203,6 +203,16 @@ body {
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
+    margin-right: 10px; /* ◀️ EXATAMENTE O QUE VOCÊ PEDIU */
+}
+
+/* TEXTO DIGITANDO */
+#digitandoStatus {
+    color: #0f0;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-left: 10px;
+    margin-bottom: 5px;
 }
 </style>
 </head>
@@ -224,6 +234,8 @@ body {
 
     <div id="mensagens"></div>
 
+    <div id="digitandoStatus"></div>
+
     <div id="inputArea">
         <input id="msgInput" placeholder="Digite..." disabled>
         <button id="sendBtn" disabled>➤</button>
@@ -234,7 +246,7 @@ body {
 <script type="module">
 import { initializeApp } 
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove }
+import { getDatabase, ref, set, onValue, push, remove, update }
   from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const usuario = localStorage.getItem("usuarioLogado");
@@ -288,6 +300,9 @@ onValue(ref(db, "chat/usuariosOnline"), snap => {
 
 let conversandoCom = null;
 
+/* SALA PRIVADA */
+function sala(a,b){ return [a,b].sort().join("_"); }
+
 /* ABRIR CHAT */
 window.abrirChat = function(nome, foto) {
     conversandoCom = nome;
@@ -304,33 +319,32 @@ window.abrirChat = function(nome, foto) {
     document.getElementById("sendBtn").disabled = false;
 
     carregarMensagens();
+    monitorarDigitando();
 };
 
-/* VOLTAR PARA LISTA */
+/* VOLTAR */
 window.voltarLista = function() {
     document.getElementById("listaUsuarios").classList.remove("hidden");
     document.querySelector(".botaoVoltar").style.display = "none";
     document.getElementById("headerFoto").style.display = "none";
-    document.getElementById("headerNome").textContent = "Selecione um usuário";
+    document.getElementById("headerNome")
+        .textContent = "Selecione um usuário";
+
     document.getElementById("msgInput").disabled = true;
     document.getElementById("sendBtn").disabled = true;
     document.getElementById("mensagens").innerHTML = "";
+    document.getElementById("digitandoStatus").textContent = "";
 };
-
-/* SALA PRIVADA */
-function sala(a,b){ return [a,b].sort().join("_"); }
 
 /* CARREGAR MENSAGENS */
 function carregarMensagens() {
     const caminho = "chat/conversas/" + sala(usuario, conversandoCom);
-    const msgsRef = ref(db, caminho);
 
-    onValue(msgsRef, snap => {
+    onValue(ref(db, caminho), snap => {
         const box = document.getElementById("mensagens");
         box.innerHTML = "";
 
         snap.forEach(m => {
-            const id = m.key;
             const d = m.val();
 
             const div = document.createElement("div");
@@ -338,15 +352,11 @@ function carregarMensagens() {
 
             div.innerHTML = `
                 <span>${d.texto}</span>
-                <div class="msgHora">${new Date(d.hora).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</div>
-
-                ${
-                    d.de === usuario 
-                    ? `<img src="https://cdn-icons-png.flaticon.com/512/484/484662.png" 
-                          class="lixeiraBtn" 
-                          onclick="apagarMsg('${caminho}','${id}')">`
-                    : ""
-                }
+                <div class="msgHora">
+                    ${new Date(d.hora).toLocaleTimeString(
+                        "pt-BR", {hour:"2-digit",minute:"2-digit"}
+                    )}
+                </div>
             `;
 
             box.appendChild(div);
@@ -356,16 +366,8 @@ function carregarMensagens() {
     });
 }
 
-/* APAGAR MENSAGEM */
-window.apagarMsg = function(caminho, id) {
-    if (confirm("Excluir esta mensagem para todos?")) {
-        remove(ref(db, caminho + "/" + id));
-    }
-};
-
 /* ENVIAR */
 document.getElementById("sendBtn").onclick = enviar;
-
 function enviar() {
     const input = document.getElementById("msgInput");
     if (!input.value) return;
@@ -376,7 +378,34 @@ function enviar() {
         hora: Date.now()
     });
 
+    update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
+        [usuario]: false
+    });
+
     input.value = "";
+}
+
+/* SISTEMA DIGITANDO */
+function monitorarDigitando() {
+    const input = document.getElementById("msgInput");
+
+    input.oninput = () => {
+        update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
+            [usuario]: input.value.length > 0
+        });
+    };
+
+    onValue(
+        ref(db, "chat/digitando/" + sala(usuario, conversandoCom)),
+        snap => {
+            const data = snap.val() || {};
+            const digitando = Object.keys(data)
+                .filter(n => n !== usuario && data[n])[0];
+
+            document.getElementById("digitandoStatus").textContent =
+                digitando ? digitando + " está digitando..." : "";
+        }
+    );
 }
 </script>
 
