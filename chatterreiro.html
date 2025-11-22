@@ -308,8 +308,11 @@ document.addEventListener("click", () => {
 
 <!-- FIREBASE -->
 <script type="module">
-import { initializeApp } 
-  from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { 
+    initializeApp, 
+    getApp 
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+
 import { 
     getDatabase, 
     ref, 
@@ -317,16 +320,17 @@ import {
     onValue, 
     push, 
     remove, 
-    update,
     onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
+/* 🔥 PEGA O USUÁRIO */
 const usuario = localStorage.getItem("usuarioLogado");
 const fotoPerfil = localStorage.getItem("fotoPerfil_" + usuario)
  || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 if (!usuario) alert("Faça login primeiro.");
 
+/* 🔥 CONFIGURAÇÃO */
 const firebaseConfig = {
     apiKey: "AIzaSyAt4CeGjdbjzdtMH1qZHw6RuBFJ6SeTDKk",
     authDomain: "coletivo-f34d4.firebaseapp.com",
@@ -337,19 +341,38 @@ const firebaseConfig = {
     appId: "1:296376447787:web:1341c59c8087d6ac1e4b6e"
 };
 
-const app = initializeApp(firebaseConfig);
+/* 🔥 EVITA INICIALIZAÇÃO DUPLICADA */
+let app;
+try {
+    app = getApp();
+} catch {
+    app = initializeApp(firebaseConfig);
+}
+
+/* 🔥 BANCO */
 const db = getDatabase(app);
 
+/* 🔥 REFERÊNCIA DO USUÁRIO ONLINE */
 const meRef = ref(db, "chat/usuariosOnline/" + usuario);
 
-/* PRESENÇA */
+/* 🔥 FUNÇÕES DE STATUS */
 function marcarOnline() {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: true });
-}
-function marcarOffline() {
-    set(meRef, { nome: usuario, foto: fotoPerfil, online: false });
+    set(meRef, { 
+        nome: usuario, 
+        foto: fotoPerfil, 
+        online: true 
+    });
 }
 
+function marcarOffline() {
+    set(meRef, { 
+        nome: usuario, 
+        foto: fotoPerfil, 
+        online: false 
+    });
+}
+
+/* 🔥 DESCONEXÃO AUTOMÁTICA REAL */
 onDisconnect(meRef).set({
     nome: usuario,
     foto: fotoPerfil,
@@ -525,4 +548,5 @@ function enviar() {
 
 </body>
 </html>
+
 
