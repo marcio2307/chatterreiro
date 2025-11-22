@@ -498,13 +498,15 @@ function carregarMensagens() {
                     new Date(d.hora).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
                 }</div>
 
-                ${
-                    d.de === usuario 
-                    ? `<img src="https://cdn-icons-png.flaticon.com/512/484/484662.png"
-                           class="lixeiraBtn"
-                           onclick="apagarMsg('${caminho}','${id}')">`
-                    : ""
-                }
+               ${
+    d.de === usuario 
+    ? `<div style="text-align:right; margin-top:4px;">
+           <img src="https://cdn-icons-png.flaticon.com/512/484/484662.png"
+                style="width:18px; height:18px; cursor:pointer; opacity:0.8;"
+                onclick="apagarMsg('${caminho}','${id}')">
+       </div>`
+    : ""
+}
             `;
 
             box.appendChild(div);
@@ -548,5 +550,6 @@ function enviar() {
 
 </body>
 </html>
+
 
 
