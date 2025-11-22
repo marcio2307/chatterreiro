@@ -126,7 +126,7 @@ body {
     padding-bottom: 120px !important;
 }
 
-/* BALÃO RECEBIDO — Estilo WhatsApp */
+/* BALÃO RECEBIDO */
 .msg {
     display: inline-block;
     max-width: 75%;
@@ -143,7 +143,7 @@ body {
     word-break: break-word;
 }
 
-/* Rabinho do balão recebido */
+/* Rabinho */
 .msg::after {
     content: "";
     position: absolute;
@@ -155,18 +155,18 @@ body {
     border-right: 10px solid transparent;
 }
 
-/* BALÃO ENVIADO — Estilo WhatsApp */
+/* BALÃO ENVIADO — CORRIGIDO */
 .msg.me {
     background: #065f06;
     border: 1px solid #0f0;
     color: #fff;
     margin-left: auto;
-    margin-right: 10px;
+    margin-right: 40px;  /* ← AFASTAMENTO CORRIGIDO */
     border-radius: 18px;
     border-bottom-right-radius: 0;
 }
 
-/* Rabinho do balão enviado */
+/* Rabinho enviado */
 .msg.me::after {
     content: "";
     position: absolute;
@@ -424,28 +424,31 @@ function enviar() {
     input.value = "";
 }
 
-/* DIGITANDO EM TEMPO REAL */
+/* --------------- DIGITANDO EM TEMPO REAL (CORRIGIDO) --------------- */
+
+let digitandoListener = null;
+
 function monitorarDigitando() {
     const input = document.getElementById("msgInput");
+    const caminho = "chat/digitando/" + sala(usuario, conversandoCom);
 
     input.oninput = () => {
-        update(ref(db, "chat/digitando/" + sala(usuario, conversandoCom)), {
+        update(ref(db, caminho), {
             [usuario]: input.value.length > 0
         });
     };
 
-    onValue(
-        ref(db, "chat/digitando/" + sala(usuario, conversandoCom)),
-        snap => {
-            const data = snap.val() || {};
-            const digit = Object.keys(data)
-                .filter(n => n !== usuario && data[n])[0];
+    if (digitandoListener) digitandoListener();
 
-            document.getElementById("digitandoStatus").textContent =
-                digit ? digit + " está digitando..." : "";
-        }
-    );
+    digitandoListener = onValue(ref(db, caminho), snap => {
+        const data = snap.val() || {};
+        const digit = Object.keys(data).find(n => n !== usuario && data[n]);
+
+        document.getElementById("digitandoStatus").textContent =
+            digit ? `${digit} está digitando...` : "";
+    });
 }
+
 </script>
 
 </body>
